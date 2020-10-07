@@ -1,0 +1,7 @@
+[
+    {
+        "id": "default",
+        "execute-command": "ping",
+        "response-message": "I am working!!"
+    }
+]
