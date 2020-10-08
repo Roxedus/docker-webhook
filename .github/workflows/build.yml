@@ -6,8 +6,9 @@ on:
       - "Dockerfile"
       - "root/**"
       - ".github/workflows/build.yml"
-    branches-ignore:
-      - "dependabot/**"
+    branches:
+      - main
+      - dev
 
 jobs:
   checks:
