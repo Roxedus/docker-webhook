@@ -4,7 +4,7 @@
 ---
 version: "2.1"
 services:
-  jellyfin:
+  webhook:
     image: roxedus/webhook
     container_name: webhook
     environment:
