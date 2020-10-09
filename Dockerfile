@@ -4,9 +4,9 @@ FROM linuxserver/docker-compose:amd64-${COMPOSE_TAG} as compose-amd64
 FROM linuxserver/docker-compose:arm32v7-${COMPOSE_TAG} as compose-arm32
 FROM linuxserver/docker-compose:arm64v8-${COMPOSE_TAG} as compose-arm64
 
-FROM linuxserver/docker-compose:amd64-alpine-${COMPOSE_TAG} as compose-alpine-amd64
-FROM linuxserver/docker-compose:arm32v7-alpine-${COMPOSE_TAG} as compose-alpine-arm32
-FROM linuxserver/docker-compose:arm64v8-alpine-${COMPOSE_TAG} as compose-alpine-arm64
+FROM linuxserver/docker-compose:amd64-alpine as compose-alpine-amd64
+FROM linuxserver/docker-compose:arm32v7-alpine as compose-alpine-arm32
+FROM linuxserver/docker-compose:arm64v8-alpine as compose-alpine-arm64
 
 FROM lsiobase/alpine:3.11 as buildstage
 
