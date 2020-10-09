@@ -1,44 +1,34 @@
-FROM lsiobase/alpine:3.12 as buildstage
+ARG COMPOSE_TAG="latest"
 
-# build variables
-ARG WEBHOOK_RELEASE
+FROM linuxserver/docker-compose:amd64-${COMPOSE_TAG} as compose-amd64
+FROM linuxserver/docker-compose:arm32v7-${COMPOSE_TAG} as compose-arm32
+FROM linuxserver/docker-compose:arm64v8-${COMPOSE_TAG} as compose-arm64
 
-# hadolint ignore=DL3018
-RUN \
-    echo "**** install build packages ****" && \
-    uname -a && \
-    apk add --no-cache \
-        --repository http://dl-cdn.alpinelinux.org/alpine/edge/main \
-        --repository http://dl-cdn.alpinelinux.org/alpine/edge/community \
-        curl \
-        g++ \
-        gcc \
-        git \
-        go \
-        tar
+FROM linuxserver/docker-compose:amd64-alpine-${COMPOSE_TAG} as compose-alpine-amd64
+FROM linuxserver/docker-compose:arm32v7-alpine-${COMPOSE_TAG} as compose-alpine-arm32
+FROM linuxserver/docker-compose:arm64v8-alpine-${COMPOSE_TAG} as compose-alpine-arm64
 
-# hadolint ignore=DL3003,DL4006
-RUN \
-    echo "**** fetch source code ****" && \
-    if [ -z ${WEBHOOK_RELEASE+x} ]; then \
-        WEBHOOK_RELEASE=$(curl -sX GET "https://api.github.com/repos/adnanh/webhook/releases/latest" | \
-        awk '/tag_name/{print $4;exit}' FS='[""]') \
-    ;fi && \
-    mkdir -p /tmp/webhook && \
-    curl -o /tmp/webhook-src.tar.gz -L \
-        "https://github.com/adnanh/webhook/archive/${WEBHOOK_RELEASE}.tar.gz" && \
-    tar xf /tmp/webhook-src.tar.gz -C /tmp/webhook --strip-components=1 && \
-    echo "**** compile webhook  ****" && \
-    cd /tmp/webhook && \
-    rm -f go.sum && \
-    go get -d && \
-    go build -o /app/webhook
+FROM lsiobase/alpine:3.11 as buildstage
 
-FROM lsiobase/alpine:3.12
+COPY --from=compose-amd64 /usr/local/bin/docker-compose /root-layer/docker-compose/docker-compose_x86_64
+COPY --from=compose-amd64 /usr/local/bin/docker /root-layer/docker-compose/docker_x86_64
+COPY --from=compose-arm32 /usr/local/bin/docker-compose /root-layer/docker-compose/docker-compose_armv7l
+COPY --from=compose-arm32 /usr/local/bin/docker /root-layer/docker-compose/docker_armv7l
+COPY --from=compose-arm64 /usr/local/bin/docker-compose /root-layer/docker-compose/docker-compose_aarch64
+COPY --from=compose-arm64 /usr/local/bin/docker /root-layer/docker-compose/docker_aarch64
 
-# set version label
-LABEL maintainer="Roxedus"
+COPY --from=compose-alpine-amd64 /usr/local/bin/docker-compose /root-layer/alpine/docker-compose/docker-compose_x86_64
+COPY --from=compose-alpine-amd64 /usr/local/bin/docker /root-layer/alpine/docker-compose/docker_x86_64
+COPY --from=compose-alpine-arm32 /usr/local/bin/docker-compose /root-layer/alpine/docker-compose/docker-compose_armv7l
+COPY --from=compose-alpine-arm32 /usr/local/bin/docker /root-layer/alpine/docker-compose/docker_armv7l
+COPY --from=compose-alpine-arm64 /usr/local/bin/docker-compose /root-layer/alpine/docker-compose/docker-compose_aarch64
+COPY --from=compose-alpine-arm64 /usr/local/bin/docker /root-layer/alpine/docker-compose/docker_aarch64
+COPY root/ /root-layer/
 
-# copy files from build stage and local files
-COPY --from=buildstage /app/webhook /usr/bin/
-COPY root/ /
+# runtime stage
+FROM scratch
+
+LABEL maintainer="roxedus"
+
+# Add files from buildstage
+COPY --from=buildstage /root-layer/ /

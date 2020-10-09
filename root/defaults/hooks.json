@@ -1,7 +1,0 @@
-[
-    {
-        "id": "default",
-        "execute-command": "echo",
-        "response-message": "I am working!"
-    }
-]
